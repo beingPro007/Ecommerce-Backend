@@ -8,13 +8,11 @@ app.use(cors({
     origin: process.env.CORS_ORIGIN
 }))
 
-app.get('/register', (req, res) => {
-  res.send('Hello, World!');
-});
+app.use(express.json());
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
-});
+//router imports
+import userRoute from "./routes/user.router.js"
+
+app.use("/api/v1/users", userRoute);
 
 export {app};
