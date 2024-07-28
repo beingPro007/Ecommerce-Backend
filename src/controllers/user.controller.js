@@ -2,6 +2,24 @@ import { asynchandler } from "../utils/asynchandler.js"
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { access } from "fs";
+
+const generateAccessAndRefreshTokens = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(
+      500,
+      error.message
+    );
+  }
+};
 
 const registerUser = asynchandler(async(req, res, next, err) => {
 
@@ -56,5 +74,42 @@ const registerUser = asynchandler(async(req, res, next, err) => {
 
 })
 
+const loginUser = asynchandler(async(req, res) => {
+  const { username, phoneNumber, email, password } = req.body;
 
-export {registerUser}
+  if(!username && !email && !phoneNumber){
+    console.log("You must need to enter one of them!");
+  }
+
+  const user = await User.findOne({
+    $or: [{username}, {email}, {phoneNumber}]
+  })
+
+  if(!user){
+    throw new ApiError(404, "User is not in our System so kindly Register first !");
+  }
+
+  const isPasswordValid = await user.isPasswordCorrect(password);
+
+  if(!isPasswordValid) throw new ApiError(404, "Enter the correct Password !");
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  )
+
+  const options = {
+    httpOnly: true,
+    secure: true
+  }
+
+  return res.status(200).
+  cookie("accessToken", accessToken, options).
+  cookie("refreshToken", refreshToken, options).
+  json(new ApiResponse(200, "User Logged in Succesfully", loggedInUser));
+
+})
+export {registerUser, loginUser};
