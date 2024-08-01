@@ -22,7 +22,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 const registerUser = asynchandler(async(req, res, next, err) => {
 
     //Getting values from body...
-    const {fullName, email, password, username, phoneNumber} = req.body;
+    const {fullName, email, password, username, phoneNumber, role} = req.body;
 
     //checking for empty case...
     if (
@@ -53,6 +53,7 @@ const registerUser = asynchandler(async(req, res, next, err) => {
         phoneNumber,
         email,
         username,
+        role,
     })
 
 
