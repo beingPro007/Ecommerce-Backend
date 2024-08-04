@@ -15,8 +15,10 @@ app.use(cookieParser())
 //router imports
 import userRoute from "./routes/user.router.js"
 import productRoute from "./routes/product.routes.js"
+import profileRoute from "./routes/profile.route.js"
 
 app.use("/api/v1/users", userRoute);
 app.use("/api/v1/products", productRoute);
+app.use("/api/v1/user", profileRoute);
 
 export {app};

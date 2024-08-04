@@ -171,7 +171,7 @@ const deleteProduct = asynchandler(async (req, res) => {
     }
   ]);
 
-  const prodId = prodToDelete._id;
+  const prodId = prodToDelete[0]._id;
 
   const deletedProduct = await Product.findByIdAndDelete(prodId);
 

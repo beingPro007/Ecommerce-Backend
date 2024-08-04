@@ -17,6 +17,8 @@ router
   .get(verifyJwt, checkRole(['admin', 'customer']), getCategoryProducts);
 
 //Admin Roles only
+
+//Add product
 router.route('/addProduct').post(
   verifyJwt,
   checkRole(['admin']),
@@ -28,6 +30,8 @@ router.route('/addProduct').post(
   ]),
   addProduct
 );
+
+//Update Product
 router.route('/updateProduct/:prodName').patch(
   verifyJwt,
   checkRole(['admin']),
@@ -39,6 +43,8 @@ router.route('/updateProduct/:prodName').patch(
   ]),
   updateProductDetails
 );
+
+//Delete Product
 router
   .route('/deleteProduct/:prodName')
   .delete(verifyJwt, checkRole(['admin']), deleteProduct);
