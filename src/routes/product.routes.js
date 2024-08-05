@@ -6,6 +6,7 @@ import {
   deleteProduct,
   getCategoryProducts,
   updateProductDetails,
+  buyNow
 } from '../controllers/product.controller.js';
 import { verifyJwt } from '../middlewares/verifyJWT.miidleware.js';
 
@@ -48,5 +49,9 @@ router.route('/updateProduct/:prodName').patch(
 router
   .route('/deleteProduct/:prodName')
   .delete(verifyJwt, checkRole(['admin']), deleteProduct);
+
+router
+  .route('/buyNow')
+  .post(verifyJwt, checkRole(['customer']), buyNow);
 
 export default router;

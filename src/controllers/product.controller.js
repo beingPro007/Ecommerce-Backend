@@ -1,4 +1,5 @@
 import { Product } from '../models/product.models.js';
+import {Order} from "../models/orders.models.js"
 import { ApiError } from '../utils/ApiError.js';
 import { asynchandler } from '../utils/asynchandler.js';
 import fs from 'fs';
@@ -74,26 +75,24 @@ const getCategoryProducts = asynchandler(async (req, res) => {
 });
 
 const updateProductDetails = asynchandler(async (req, res) => {
-
   const product = await Product.aggregate([
     {
-      $match:{
-        prodName : req.params.prodName
-      }
-    }
+      $match: {
+        prodName: req.params.prodName,
+      },
+    },
   ]);
 
-  if(product.length === 0){
-    throw new ApiError(400, "Product not found");
+  if (product.length === 0) {
+    throw new ApiError(400, 'Product not found');
   }
 
   const prodId = product[0]._id;
 
   const { name, description, price, stock, category } = req.body;
 
-  const updatedImagesLocalPath = req.files?.prodImages?.map(
-    (images) => images.path
-  ) || [];
+  const updatedImagesLocalPath =
+    req.files?.prodImages?.map((images) => images.path) || [];
 
   if (
     !name &&
@@ -113,34 +112,33 @@ const updateProductDetails = asynchandler(async (req, res) => {
 
     const uploadUpdatedImages = [];
 
-    if(req.files && Object.keys(req.files).length !== 0){
+    if (req.files && Object.keys(req.files).length !== 0) {
       for (const path of updatedImagesLocalPath) {
         const cloudinaryUpdatedImages = await uploadOnCloudinary(path);
         uploadUpdatedImages.push(cloudinaryUpdatedImages?.url);
       }
     }
 
-    const updatedFields = {}
+    const updatedFields = {};
 
-    if(name) updatedFields.prodName = name;
-    if(description) updatedFields.description = description;
-    if(price > 0 ) updatedFields.price = price;
-    if(stock > 0 ) updatedFields.stock = stock;
-    if(category) updatedFields.category = category;
-    if(uploadUpdatedImages.length !== 0) updatedFields.prodImages = uploadUpdatedImages;
+    if (name) updatedFields.prodName = name;
+    if (description) updatedFields.description = description;
+    if (price > 0) updatedFields.price = price;
+    if (stock > 0) updatedFields.stock = stock;
+    if (category) updatedFields.category = category;
+    if (uploadUpdatedImages.length !== 0)
+      updatedFields.prodImages = uploadUpdatedImages;
 
-    if(Object.keys(updatedFields).length === 0){
-      throw new ApiError(400, "No field to update")
+    if (Object.keys(updatedFields).length === 0) {
+      throw new ApiError(400, 'No field to update');
     }
 
-
     const updatedProduct = await Product.findByIdAndUpdate(
-
       { _id: prodId },
 
-      { $set : updatedFields },
+      { $set: updatedFields },
 
-      { new : true, runValidators: true }
+      { new: true, runValidators: true }
     );
 
     if (!updatedProduct) {
@@ -162,13 +160,12 @@ const updateProductDetails = asynchandler(async (req, res) => {
 });
 
 const deleteProduct = asynchandler(async (req, res) => {
-
   const prodToDelete = await Product.aggregate([
     {
-      $match : {
-        prodName : req.params.prodName,
-      }
-    }
+      $match: {
+        prodName: req.params.prodName,
+      },
+    },
   ]);
 
   const prodId = prodToDelete[0]._id;
@@ -186,4 +183,42 @@ const deleteProduct = asynchandler(async (req, res) => {
     );
 });
 
-export { addProduct, getCategoryProducts, updateProductDetails, deleteProduct };
+const buyNow = asynchandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  if (!userId) {
+    throw new ApiError(400, 'Unauthorized access! Login First!');
+  }
+
+  const { qty, prodId, shippingAddress, paymentMethod } = req.body;
+  
+
+  if (!qty || !prodId || !shippingAddress || !paymentMethod) {
+    throw new ApiError(400, 'All fields are mandatory!');
+  }
+
+  const product = await Product.findById(prodId);
+
+  if (!product) {
+    throw new ApiError(404, 'Product not found');
+  }
+
+  const order = await Order.create({
+    orderedBy: userId,
+    product: prodId,
+    price: product.price,
+    qty: qty,
+    orderStatus: 'Pending',
+    images: product.prodImages[0],
+    shippingAddress: shippingAddress,
+    paymentMethod: paymentMethod,
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, 'Order created successfully', order));
+});
+
+
+
+export { addProduct, getCategoryProducts, updateProductDetails, deleteProduct, buyNow };

@@ -67,7 +67,8 @@ const userSchema = new Schema(
     role: {
       type: String,
       default: 'customer',
-      required: false
+      required: false,
+      enum: ["customer", "admin"]
     },
     phoneNumber: {
       type: String,
@@ -79,7 +80,6 @@ const userSchema = new Schema(
     },
     avatar: {
       type: String,
-      required: true,
       default : ""
     },
     shippingAddress: shippingAddressSchema,
