@@ -192,7 +192,6 @@ const buyNow = asynchandler(async (req, res) => {
 
   const { qty, prodId, shippingAddress, paymentMethod } = req.body;
   
-
   if (!qty || !prodId || !shippingAddress || !paymentMethod) {
     throw new ApiError(400, 'All fields are mandatory!');
   }
@@ -203,20 +202,33 @@ const buyNow = asynchandler(async (req, res) => {
     throw new ApiError(404, 'Product not found');
   }
 
-  const order = await Order.create({
-    orderedBy: userId,
-    product: prodId,
-    price: product.price,
-    qty: qty,
-    orderStatus: 'Pending',
-    images: product.prodImages[0],
-    shippingAddress: shippingAddress,
-    paymentMethod: paymentMethod,
-  });
+  //check for invertory stock > 0
+  if(product.stock >= qty){
+    const order = await Order.create({
+      orderedBy: userId,
+      product: prodId,
+      price: product.price,
+      qty: qty,
+      orderStatus: 'Pending',
+      images: product.prodImages[0],
+      shippingAddress: shippingAddress,
+      paymentMethod: paymentMethod,
+      grandTotal: qty * product.price,
+    });
+    if(!order){
+      throw new ApiError(500, "Order not placed!")
+    }
+    
+    product.stock -= qty;
+    await product.save();
 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, 'Order created successfully', order));
+    return res
+      .status(201)
+      .json(new ApiResponse(201, 'Order created successfully', order));
+  }else{
+    return res.status(200)
+    .json(new ApiResponse(200, "Sorry ! We ran out of Stock"));
+  }
 });
 
 

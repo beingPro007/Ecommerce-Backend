@@ -1,68 +1,84 @@
 import mongoose, { Schema } from 'mongoose';
 
-const orderedItemsSchema = [
+const shippingAddressSchema = new Schema(
   {
-    name: {
+    street: {
       type: String,
       required: true,
+      trim: true,
     },
-    qty: {
-        type: Number,
-        required: true,
+    landMark: {
+      type: String,
+      required: false,
+      trim: true,
     },
-    price: {
-        type: Number,
-        required: true,
+    city: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    image: {
-        type: String,
-        required: true
+    pinCode: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    product: {
-        type: Schema.Types.ObjectId,
-        ref: "Product",
-        required: true,
-    }
+    state: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    country: {
+      type: String,
+      required: true,
+      trim: true,
+    },
   },
-];
+  { timestamps: false }
+);
 
 const orderSchema = new Schema(
   {
     orderedBy: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required:true,
-        index: true
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
+    prodName: {
+        type: String,
+        required: true,
     },
     product: {
-        type: Schema.Types.ObjectId,
-        ref: "Product",
-        required: true,
-        index: true
+      type: Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true,
+      index: true,
     },
     price: {
-        type: Number,
-        required: true,
+      type: Number,
+      required: true,
     },
     qty: {
-        type: Number,
-        required: true,
+      type: Number,
+      required: true,
     },
     orderStatus: {
-        type: String,
-        enum: ["Pending", "Cancelled", "Returned", "Delivered"],
-        default : "Pending",
+      type: String,
+      enum: ['Pending', 'Cancelled', 'Returned', 'Delivered'],
+      default: 'Pending',
     },
     images: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
-    grandTotal : {
-        type: Number,
-        required: false,
-    }
+    grandTotal: {
+      type: Number,
+      required: false,
+    },
+    
   },
   { timestamps: true }
 );
+
 
 export const Order = mongoose.model("Order", orderSchema);

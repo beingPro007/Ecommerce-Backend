@@ -18,8 +18,7 @@ const productSchema = new Schema(
       min: [0, 'Price must be greater than 0'], // Ensures the price is not negative
     },
     category: {
-      type: Schema.Types.ObjectId,
-      ref: 'Category', // References the Category collection
+      type: String,
       required: true, // Ensures every product is associated with a category
     },
     stock: {

@@ -2,38 +2,7 @@ import mongoose, {Schema} from "mongoose";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 
-const shippingAddressSchema = new Schema({
-    street:{
-        type:String,
-        required: true,
-        trim: true,
-    },
-    landMark: {
-        type: String,
-        required: false,
-        trim: true
-    },
-    city:{
-        type: String,
-        required: true,
-        trim: true,
-    },
-    postalCode:{
-        type: String,
-        required: true,
-        trim: true,
-    },
-    state:{
-        type: String,
-        required: true,
-        trim: true,
-    },
-    country: {
-        type: String,
-        required:true,
-        trim: true,
-    }
-},{timestamps: false})
+
 
 const userSchema = new Schema(
   {
@@ -82,7 +51,6 @@ const userSchema = new Schema(
       type: String,
       default : ""
     },
-    shippingAddress: shippingAddressSchema,
   },
   { timestamps: true }
 );
