@@ -4,7 +4,7 @@ const productSchema = new Schema(
   {
     prodName: {
       type: String,
-      required: true,
+      required: false,
       index: true,
       unique: true, // Ensures product names are unique
     },

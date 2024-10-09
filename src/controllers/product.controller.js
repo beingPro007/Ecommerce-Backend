@@ -183,6 +183,7 @@ const deleteProduct = asynchandler(async (req, res) => {
     );
 });
 
+
 const buyNow = asynchandler(async (req, res) => {
   const userId = req.user?._id;
 
@@ -207,6 +208,7 @@ const buyNow = asynchandler(async (req, res) => {
     const order = await Order.create({
       orderedBy: userId,
       product: prodId,
+      prodName: product.prodName,
       price: product.price,
       qty: qty,
       orderStatus: 'Pending',
@@ -230,7 +232,5 @@ const buyNow = asynchandler(async (req, res) => {
     .json(new ApiResponse(200, "Sorry ! We ran out of Stock"));
   }
 });
-
-
 
 export { addProduct, getCategoryProducts, updateProductDetails, deleteProduct, buyNow };
