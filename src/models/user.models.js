@@ -51,6 +51,11 @@ const userSchema = new Schema(
       type: String,
       default : ""
     },
+    address:{
+      type: [String],
+      required: false,
+      default: []
+    }
   },
   { timestamps: true }
 );

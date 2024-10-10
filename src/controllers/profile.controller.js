@@ -1,9 +1,12 @@
 import { asynchandler } from '../utils/asynchandler.js';
 import { ApiError } from '../utils/ApiError.js';
-import { uploadOnCloudinary } from '../utils/cloudinary.js';
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { User } from '../models/user.models.js';
-import bcrypt from "bcrypt"
+import bcrypt from 'bcrypt';
 
 const addProfilePicture = asynchandler(async (req, res) => {
   const userId = req.user?.id;
@@ -97,13 +100,13 @@ const updateProfile = asynchandler(async (req, res) => {
 
   await updatedUser.save();
 
-  if(!updatedUser){
-    throw new ApiError(500, "User cannot able to be updated")
+  if (!updatedUser) {
+    throw new ApiError(500, 'User cannot able to be updated');
   }
 
-  const updatedUserAfterFilteration = await User.findById(updatedUser._id).select(
-    '-password -refreshToken'
-  );
+  const updatedUserAfterFilteration = await User.findById(
+    updatedUser._id
+  ).select('-password -refreshToken');
 
   return res
     .status(200)
@@ -116,4 +119,109 @@ const updateProfile = asynchandler(async (req, res) => {
     );
 });
 
-export { addProfilePicture, updateProfile };
+const profile = asynchandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  if (!userId) {
+    throw new ApiError(404, 'You must logged in to see your Profile!!!');
+  }
+
+  const fetchedUser = await User.findById(userId).select(
+    '-password -role -refreshToken'
+  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, 'User Profile Fetched Succesfully!!!', fetchedUser)
+    );
+});
+
+const deleteProfilePicture = asynchandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  if (!userId) {
+    throw new ApiError(400, 'User not found!');
+  }
+
+  const fetchedUser = await User.findById(userId);
+
+  if (!fetchedUser) {
+    throw new ApiError(404, 'User not found!');
+  }
+
+  // Check if the avatar is a non-empty string
+  if (fetchedUser.avatar && fetchedUser.avatar.trim() !== '') {
+    await deleteFromCloudinary(fetchedUser.avatar);
+  } else {
+    throw new ApiError(404, 'No profile picture found to delete!');
+  }
+
+  fetchedUser.avatar = null; // Clear the avatar field
+
+  await fetchedUser.save(); // Save the updated user document
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Profile picture deleted successfully.'));
+});
+
+const addAddress = asynchandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  if (!userId) {
+    throw new ApiError(400, 'User not found!');
+  }
+
+  const { landmark, city, state, country, zipcode } = req.body;
+
+  if (
+    [landmark, city, state, country, zipcode].some(
+      (field) => !field || field.trim() === ''
+    )
+  ) {
+    throw new ApiError(400, 'All fields are mandatory!');
+  }
+
+  const fetchedUser = await User.findById(userId);
+
+  if (!fetchedUser) {
+    throw new ApiError(404, 'User not found!');
+  }
+
+  fetchedUser.address.push({ landmark, city, state, country, zipcode });
+
+  await fetchedUser.save();
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, 'Address added successfully!', fetchedUser.address)
+    );
+});
+
+
+const deleteProfile = asynchandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  if (!userId) {
+    throw new ApiError(400, 'User not found!!');
+  }
+
+  const deletedUser = await findByIdAndDelete(userId);
+  if (!deletedUser) {
+    throw new ApiError(400, "User can't be able to deelte!!!");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'User Deleted Successfully!!!'), deletedUser);
+});
+
+export {
+  addProfilePicture,
+  updateProfile,
+  profile,
+  deleteProfilePicture,
+  addAddress,
+  deleteProfile
+};
