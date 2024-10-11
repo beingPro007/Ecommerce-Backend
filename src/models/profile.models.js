@@ -10,7 +10,7 @@ const profileSchema = new Schema(
     profilePicture: {
       type: String,
       required: false,
-      default: ""
+      default: '',
     },
     fullName: {
       type: String,
@@ -20,9 +20,18 @@ const profileSchema = new Schema(
       type: String,
       required: true,
     },
-    location: {
-      type: String,
+    address: {
+      type: [
+        {
+          landmark: { type: String, required: true },
+          city: { type: String, required: true },
+          state: { type: String, required: true },
+          country: { type: String, required: true },
+          zipcode: { type: String, required: true },
+        },
+      ],
       required: false,
+      default: [],
     },
   },
   { timestamps: true }

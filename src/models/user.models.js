@@ -37,7 +37,7 @@ const userSchema = new Schema(
       type: String,
       default: 'customer',
       required: false,
-      enum: ["customer", "admin"]
+      enum: ['customer', 'admin'],
     },
     phoneNumber: {
       type: String,
@@ -49,13 +49,21 @@ const userSchema = new Schema(
     },
     avatar: {
       type: String,
-      default : ""
+      default: '',
     },
-    address:{
-      type: [String],
+    address: {
+      type: [
+        {
+          landmark: { type: String, required: true },
+          city: { type: String, required: true },
+          state: { type: String, required: true },
+          country: { type: String, required: true },
+          zipcode: { type: String, required: true },
+        },
+      ],
       required: false,
-      default: []
-    }
+      default: [],
+    },
   },
   { timestamps: true }
 );

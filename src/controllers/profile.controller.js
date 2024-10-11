@@ -169,17 +169,17 @@ const addAddress = asynchandler(async (req, res) => {
   const userId = req.user?._id;
 
   if (!userId) {
-    throw new ApiError(400, 'User not found!');
+    throw new ApiError(400, 'User not found!!');
   }
 
   const { landmark, city, state, country, zipcode } = req.body;
 
   if (
     [landmark, city, state, country, zipcode].some(
-      (field) => !field || field.trim() === ''
+      (field) => field.trim() === ''
     )
   ) {
-    throw new ApiError(400, 'All fields are mandatory!');
+    throw new ApiError(400, 'Each field is Mandatory!!!');
   }
 
   const fetchedUser = await User.findById(userId);
@@ -188,14 +188,16 @@ const addAddress = asynchandler(async (req, res) => {
     throw new ApiError(404, 'User not found!');
   }
 
+  // Assuming fetchedUser.address is defined as an array in the schema
   fetchedUser.address.push({ landmark, city, state, country, zipcode });
 
+  // Save the updated user document
   await fetchedUser.save();
 
   return res
     .status(200)
     .json(
-      new ApiResponse(200, 'Address added successfully!', fetchedUser.address)
+      new ApiResponse(200, 'Address Added Successfully!!!', fetchedUser.address)
     );
 });
 
