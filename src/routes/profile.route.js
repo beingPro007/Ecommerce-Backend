@@ -45,7 +45,7 @@ router.route("/profile/addAdress").post(
 
 router.route("/profile/deleteProfile").delete(
     verifyJwt,
-    checkRole('admin'),
+    checkRole(['customer']),
     deleteProfile
 )
 
