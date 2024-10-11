@@ -209,15 +209,42 @@ const deleteProfile = asynchandler(async (req, res) => {
     throw new ApiError(400, 'User not found!!');
   }
 
-  const deletedUser = await findByIdAndDelete(userId);
+  // Aggregate to find the user details
+  const userToDelete = await User.aggregate([
+    {
+      $match: {
+        _id: userId, 
+      },
+    },
+    {
+      $project: {
+        _id: 1, 
+        username: 1, 
+        fullName: 1, 
+        phoneNumber: 1,
+      },
+    },
+  ]);
+
+  // Check if user exists
+  if (userToDelete.length === 0) {
+    throw new ApiError(404, 'User not found!!');
+  }
+
+  // Delete the user
+  const deletedUser = await User.findByIdAndDelete(userId);
   if (!deletedUser) {
-    throw new ApiError(400, "User can't be able to deelte!!!");
+    throw new ApiError(400, "User can't be deleted!!!");
   }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, 'User Deleted Successfully!!!'), deletedUser);
+    .json(
+      new ApiResponse(200, 'User Deleted Successfully!!!', userToDelete[0])
+    );
 });
+
+
 
 export {
   addProfilePicture,
