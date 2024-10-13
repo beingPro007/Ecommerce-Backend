@@ -1,4 +1,4 @@
-# This is Not the corrct documentation right now ##
+# This is Not the correct documentation right now ##
 ---
 
 ## E-Commerce Backend
