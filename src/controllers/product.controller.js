@@ -1,10 +1,13 @@
 import { Product } from '../models/product.models.js';
-import {Order} from "../models/orders.models.js"
+import { Order } from '../models/orders.models.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asynchandler } from '../utils/asynchandler.js';
 import fs from 'fs';
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
+import mongoose from 'mongoose';
+import { Review } from '../models/review.models.js';
+import {User} from '../models/user.models.js';
 
 const addProduct = asynchandler(async (req, res) => {
   const { prodName, description, price, stock, category } = req.body;
@@ -72,6 +75,20 @@ const getCategoryProducts = asynchandler(async (req, res) => {
         specificCategory
       )
     );
+});
+
+const getProdById = asynchandler(async (req, res) => {
+  const productId = req.params.prodId;
+
+  const product = await Product.findById(productId)
+
+  if (product.length === 0) {
+    throw new ApiError(500, 'No Product found for the specified ID');
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Product fetched successfully!!!', product));
 });
 
 const updateProductDetails = asynchandler(async (req, res) => {
@@ -183,54 +200,101 @@ const deleteProduct = asynchandler(async (req, res) => {
     );
 });
 
-
-const buyNow = asynchandler(async (req, res) => {
+const addReviews = asynchandler(async (req, res) => {
+  const prodId = req.params.prodId;
   const userId = req.user?._id;
 
-  if (!userId) {
-    throw new ApiError(400, 'Unauthorized access! Login First!');
+  if(!prodId){
+    throw new ApiError(400, "Product not found!!")
   }
 
-  const { qty, prodId, shippingAddress, paymentMethod } = req.body;
-  
-  if (!qty || !prodId || !shippingAddress || !paymentMethod) {
+  if (!userId) {
+    throw new ApiError(400, 'You must be logged in to review a product!');
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(400, 'No user found!');
+  }
+
+  const reviewer = user.fullName; 
+  const { noOfStars, reviewDescription } = req.body;
+
+  if (![reviewer, reviewDescription, noOfStars, prodId].every(Boolean)) {
     throw new ApiError(400, 'All fields are mandatory!');
   }
 
-  const product = await Product.findById(prodId);
-
-  if (!product) {
-    throw new ApiError(404, 'Product not found');
+  if (typeof noOfStars !== 'number' || noOfStars < 0 || noOfStars > 5) {
+    throw new ApiError(
+      400,
+      'Invalid rating. It must be a number between 0 and 5.'
+    );
   }
 
-  //check for invertory stock > 0
-  if(product.stock >= qty){
-    const order = await Order.create({
-      orderedBy: userId,
-      product: prodId,
-      prodName: product.prodName,
-      price: product.price,
-      qty: qty,
-      orderStatus: 'Pending',
-      images: product.prodImages[0],
-      shippingAddress: shippingAddress,
-      paymentMethod: paymentMethod,
-      grandTotal: qty * product.price,
-    });
-    if(!order){
-      throw new ApiError(500, "Order not placed!")
-    }
-    
-    product.stock -= qty;
-    await product.save();
+  // Create a new review
+  const review = await Review.create({
+    reviewer,
+    prodId,
+    noOfStars,
+    reviewDescription: reviewDescription.trim(), 
+  });
 
-    return res
-      .status(201)
-      .json(new ApiResponse(201, 'Order created successfully', order));
-  }else{
-    return res.status(200)
-    .json(new ApiResponse(200, "Sorry ! We ran out of Stock"));
-  }
+  // Send the response
+  res.status(200).json({
+    message: 'Review Created Successfully!',
+    review, 
+  });
 });
 
-export { addProduct, getCategoryProducts, updateProductDetails, deleteProduct, buyNow };
+const getAllProductReviews = asynchandler(async (req, res) => {
+  const prodId = req.params.prodId;
+
+  // Validate the product ID
+  if (!mongoose.Types.ObjectId.isValid(prodId)) {
+    throw new ApiError(400, 'Invalid product ID!');
+  }
+
+  const reviews = await Product.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(prodId),
+      },
+    },
+    {
+      $lookup: {
+        from: 'reviews',
+        localField: '_id',
+        foreignField: 'prodId',
+        as: 'review',
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        prodName: 1,
+        review: 1
+      },
+    }
+  ]);
+
+  if (!reviews) {
+    throw new ApiError(400, 'No reviews found for this product!');
+  }
+
+  console.log(reviews);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, 'Reviews fetched successfully!', reviews[0].review));
+});
+
+export {
+  addProduct,
+  getCategoryProducts,
+  updateProductDetails,
+  deleteProduct,
+  getProdById,
+  getAllProductReviews,
+  addReviews,
+};

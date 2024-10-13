@@ -6,16 +6,19 @@ import {
   deleteProduct,
   getCategoryProducts,
   updateProductDetails,
-  buyNow
+  buyNow,
+  getProdById,
+  addReviews,
+  getAllProductReviews,
 } from '../controllers/product.controller.js';
 import { verifyJwt } from '../middlewares/verifyJWT.miidleware.js';
 
 const router = Router();
 
 //admin and customer both are allowed.
-router
-  .route('/:category')
-  .get(verifyJwt, checkRole(['admin', 'customer']), getCategoryProducts);
+router.route('/:category').get(getCategoryProducts);
+
+router.route('/getProdById/:prodId').get(getProdById);
 
 //Admin Roles only
 
@@ -50,8 +53,12 @@ router
   .route('/deleteProduct/:prodName')
   .delete(verifyJwt, checkRole(['admin']), deleteProduct);
 
+router.route('/buyNow').post(verifyJwt, checkRole(['customer']), buyNow);
+
 router
-  .route('/buyNow')
-  .post(verifyJwt, checkRole(['customer']), buyNow);
+  .route('/addReview/:prodId')
+  .post(verifyJwt, checkRole(['customer', 'admin']), addReviews);
+
+router.route('/productReview/:prodId').get(getAllProductReviews);
 
 export default router;
